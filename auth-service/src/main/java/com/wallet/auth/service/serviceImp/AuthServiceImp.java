@@ -1,7 +1,9 @@
 package com.wallet.auth.service.serviceImp;
 
+import com.wallet.auth.client.WalletClient;
 import com.wallet.auth.dto.LoginRequest;
 import com.wallet.auth.dto.RegisterRequest;
+import com.wallet.auth.dto.requestDto.WalletCreateRequestDto;
 import com.wallet.auth.entity.User;
 import com.wallet.auth.repository.UserRepository;
 import com.wallet.auth.service.AuthService;
@@ -12,9 +14,11 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImp implements AuthService {
 
     private final UserRepository repository;
+    private final WalletClient walletClient;
 
-    public AuthServiceImp(UserRepository repository) {
+    public AuthServiceImp(UserRepository repository, WalletClient walletClient) {
         this.repository = repository;
+        this.walletClient = walletClient;
     }
 
     @Override
@@ -26,12 +30,20 @@ public class AuthServiceImp implements AuthService {
             user.setEmail(registerRequest.getEmail());
             user.setPassword(registerRequest.getPassword());
 
-            repository.save(user);
+            user = repository.save(user);
+
+            WalletCreateRequestDto requestDto = new WalletCreateRequestDto();
+            requestDto.setUserId(user.getId());
+
+            walletClient.createWallet(requestDto);
+
+            return ResponseEntity.ok("User Registered Successfully");
+
+
         }catch (Exception e){
             e.printStackTrace();
+            return ResponseEntity.ok("User Register Failed");
         }
-
-        return ResponseEntity.ok("User Registered Successfully");
     }
 
     @Override
